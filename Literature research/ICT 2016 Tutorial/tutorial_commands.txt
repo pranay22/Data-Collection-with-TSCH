@@ -1,0 +1,172 @@
+### Information ###
+
+www.openwsn.org
+
+#Issue tracking
+
+https://openwsn.atlassian.net/secure/Dashboard.jspa
+
+#Code @ Github
+
+https://github.com/openwsn-berkeley/
+
+#Questions
+
+https://openwsn.atlassian.net/wiki/questions
+
+### Where is OpenWSN in this VM? ###
+/home/openwsn/Desktop/openwsn/openwsn-fw
+/home/openwsn/Desktop/openwsn/openwsn-sw
+
+The FW folder contains the code that runs in the device (including the protocol stack from 15.4e to CoAP.
+The SW folder contains the code that runs in the LBR and many other helper tools. 
+
+### Useful commands ###
+
+#clone openwsn
+
+git clone https://github.com/openwsn-berkeley/openwsn-fw.git
+git clone https://github.com/openwsn-berkeley/openwsn-sw.git
+git clone https://github.com/openwsn-berkeley/coap.git
+
+#Compile the code
+
+#Compile openwsn in simulator mode
+cd /home/openwsn/Desktop/openwsn/openwsn-fw
+scons board=python toolchain=gcc oos_openwsn
+
+#see all options
+scons --help 
+
+#Start OpenVisualizer in Simulation mode
+cd /home/openwsn/Desktop/openwsn/openwsn-sw/software/openvisualizer
+
+sudo scons runweb --sim
+
+firefox 127.0.0.1:8080 &
+
+#in gui mode
+sudo scons rungui --sim --simTopology=linear
+
+#Explore different options for the simulator
+
+scons --help
+
+check:
+
+--simCount=n  Run in simulator mode with 'n' motes.
+--simTopology=<linear|fully-meshed> Force a certain topology for simulation.
+
+copy-simfw:
+        Copy files for the simulator, generated from an OpenWSN firmware 
+        build on this host. Assumes firmware top-level directory is 
+        '../../../openwsn-fw'.
+
+ 
+#Ping a mote in the simulator
+
+ping6 -s 2 bbbb::1415:92cc:0:3
+
+#compile for openmote
+
+scons board=OpenMote-CC2538 toolchain=armgcc oos_openwsn
+
+#compile and flash openmote
+
+scons board=OpenMote-CC2538 toolchain=armgcc bootload=/dev/ttyUSB0 oos_openwsn
+
+#In copper:
+#manage error led 
+#in the simulator
+coap://[bbbb::1415:92cc:0:2]:5683/l
+
+#in an openmote
+coap://[bbbb::12:4b00:60d:9f6c]:5683/l
+
+PUT 2 -- Toggle
+GET -- gets the status
+
+also you can execute /home/openwsn/Desktop/openwsn/openwsn-fw/openapps/cleds/cleds.py
+
+### ECLIPSE ###
+
+1-Open eclipse
+2-Create or select your workspace folder
+3-File->Import->Existing Project Into Workspace
+4-Browse to /home/openwsn/Desktop/openwsn/openwsn-fw/projects/OpenMote-CC2538/Eclipse-Format
+5-Accept
+6-Right click on the OpenWSN project head -> select Properties -> C/C++ Build -> Environment
+7-Add Environment Variable (click Add...) -> Name it SCONS with value scons --> Accept and leave properties
+8-At the right of the file editor in Eclipse Click the Tab "Make Target". Unfold the list of targets
+9-Double click in "oos_openwsn (clean)" then "oos_openwsn" to compile.
+
+### USING the JTAG
+connect the jtag to the VM
+In eclipse
+Run -> Debug Configurations
+GDB Segger JLink Debugging
+
+C/C++ Application to debug
+/home/openwsn/Desktop/openwsn/openwsn-fw/build/OpenMote-CC2538_armgcc/projects/common/03oos_openwsn_prog
+
+### ADDING AN APP ###
+for example copy and paste the cleds folder
+rename the folder to cleds2
+rename the functions in cleds2 from cleds_ to cleds2_
+
+compile dynamically adding the app
+scons board=OpenMote-CC2538 toolchain=armgcc apps=cleds2 oos_openwsn
+
+Not supported in simulator mode yet.
+
+### Playing with the static schedule
+in schedule.h
+
+#define SLOTFRAME_LENGTH    11 
+#define SCHEDULE_MINIMAL_6TISCH_ACTIVE_CELLS                      1
+
+
+### Enabling/Disabling Ch. Hopping
+
+look into IEEE802.15.4.c 
+set 
+ieee154e_vars.singleChannel = 0;
+to disable it.
+
+Set it to a channel between 11 and 26 to fix it.
+
+### IoT Lab
+
+Guided tutorial here
+https://openwsn.atlassian.net/wiki/display/OW/OpenWSN+on+IoT-LAB
+
+# Test locally first with OpenMote, TelosB or any other supported mote
+
+scons board=OpenMote-CC2538 toolchain=armgcc bootload=/dev/ttyUSB0 bsp_uart
+use putty to open the /dev/ttyUSB0 at 115200 bps
+
+See the "Hello World!!"
+
+##The test to the IoT Lab
+
+scons board=wsn430v14 toolchain=mspgcc bsp_uart
+
+visit http:://iot-lab.info
+
+#Start an IoT-lab experiment:
+
+Experiment name: “poipoi”
+Duration: 20 minutes
+Site: Rocquencourt
+Motes: 1x “wsn430:cc2420”
+Associate:
+Nodes: wsn430-xxx
+Profile: create one with default parameters
+Firmware: 01bsp_uart_prog.ihex
+
+connect over SSH to:
+rocquencourt.iot-lab.info
+nc wsn430-11 20000
+
+
+
